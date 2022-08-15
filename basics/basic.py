@@ -88,6 +88,12 @@ def load_stream_Grimsel(start_time, end_time, asdf_ini, stanos=None):
     return stream_1
 
 
+def load_trace_Grimsel(start_time, end_time, asdf_ini, stano=None):
+    stream_1 = load_stream_Grimsel(start_time, end_time, asdf_ini, stano)
+    stream_1 = stream_1.detrend('linear')
+    return stream_1[0]
+
+
 def flatten_list_of_list(regular_list):
     flat_list = list(np.concatenate(regular_list).flat)
     return flat_list

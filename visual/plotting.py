@@ -361,3 +361,23 @@ def plot_waveform_characteristic_function_magnitude(stream, nsta, nlta, tr_on, t
             continue
 
     return figure
+
+
+def plot_numpy_array_of_traces(trace_data, title=None):
+    time_axis = np.arange(0, trace_data.shape[1]) * 0.005
+    plt.figure(figsize=(11.69, 8.27))
+    for index, trace in enumerate(trace_data):
+        plt.plot(time_axis, trace + index,
+                 color='black',
+                 linewidth=1)
+        # plt.text(5.1, index, "ccc {:.2f}".format(df_chunk.iloc[index]['         CCC']))
+
+    plt.xlabel('time [ms]')
+    plt.ylabel('trace #')
+    plt.xlim([0, time_axis[-1:][0]])
+    plt.ylim([-1, len(trace_data)])
+    plt.grid()
+    plt.legend(loc='upper right')
+    # plt.title('TM data, possibly all traces are events')
+    plt.title(title)
+    plt.show()
