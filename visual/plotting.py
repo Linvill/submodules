@@ -4,6 +4,8 @@ Script that contains various plotting functions.
 import numpy as np
 import matplotlib.pyplot as plt
 from obspy.signal.trigger import recursive_sta_lta
+from obspy import UTCDateTime
+from submodules.basics.basic import load_trace_Grimsel
 
 
 def fft_amp(stream):
@@ -363,14 +365,21 @@ def plot_waveform_characteristic_function_magnitude(stream, nsta, nlta, tr_on, t
     return figure
 
 
-def plot_numpy_array_of_traces(trace_data, title=None):
+def plot_numpy_array_of_traces(trace_data, df_cc=None, df_cc_t_id=None, df_cc_d_t_id=None, title=None):
     time_axis = np.arange(0, trace_data.shape[1]) * 0.005
     plt.figure(figsize=(11.69, 8.27))
-    for index, trace in enumerate(trace_data):
-        plt.plot(time_axis, trace + index,
-                 color='black',
-                 linewidth=1)
-        # plt.text(5.1, index, "ccc {:.2f}".format(df_chunk.iloc[index]['         CCC']))
+    if df_cc:
+        for index, trace in enumerate(trace_data):
+            plt.plot(time_axis, trace + index,
+                     color='black',
+                     linewidth=1)
+            plt.text((len(time_axis) * 0.005)*1.02, index,
+                     "CC {:.2f}".format(df_cc[index]))
+    else:
+        for index, trace in enumerate(trace_data):
+            plt.plot(time_axis, trace + index,
+                     color='black',
+                     linewidth=1)
 
     plt.xlabel('time [ms]')
     plt.ylabel('trace #')
@@ -380,4 +389,29 @@ def plot_numpy_array_of_traces(trace_data, title=None):
     plt.legend(loc='upper right')
     # plt.title('TM data, possibly all traces are events')
     plt.title(title)
+    plt.gca().invert_yaxis()
     plt.show()
+
+
+def plot_df_of_times(asdf_ini, df, df_key='start_time', duration=0.005, title='Catalog data',
+                     readings_per_chunk=15, write_cc=False):
+    for chunk_nr, df_chunk in df.groupby(np.arange(len(df)) // readings_per_chunk):
+        trace_data = np.empty((0, 0))
+        for index, start_time in enumerate(df_chunk[df_key]):
+            start_time = UTCDateTime(start_time) - 0.00006
+            trace = load_trace_Grimsel(start_time, start_time + duration, asdf_ini, stano=[16])
+            trace_stop = int(trace.stats['sampling_rate'] * duration)
+            if trace_data.size == 0:
+                trace_data = np.array([trace.data[0:trace_stop] / np.max(np.abs(trace.data[0:trace_stop]))])
+            else:
+                trace_data = np.concatenate((trace_data, np.array([trace.data[0:trace_stop] /
+                                                                   np.max(np.abs(trace.data[0:trace_stop]))])), axis=0)
+        # plotting
+        if write_cc:
+            plot_numpy_array_of_traces(trace_data,
+                                       df_cc=df_chunk['CC'].tolist(),
+                                       df_cc_t_id=df_chunk['template_id'].tolist(),
+                                       df_cc_d_t_id=df_chunk['detected_template_id'].tolist(),
+                                       title=title)
+        else:
+            plot_numpy_array_of_traces(trace_data, title=title)
