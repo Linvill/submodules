@@ -59,9 +59,11 @@ def load_Grimsel_catalog(path_to_catalog):
 
     # Change time to UTC time
     for i in range(len(eve[0, :])):
+        datenum_tmp = eve[0, i]['time_datenum'][0][0]
+        datenum_tmp = pd.to_datetime(datenum_tmp-719529, unit='D')
         time_mu = str(eve[0, i]['time_mu'][0])
         time_mu = time_mu.replace('_', '.')
-        time_mu = UTCDateTime('2017-02-09T' + time_mu)
+        time_mu = UTCDateTime(datenum_tmp.isoformat()[0:11] + time_mu)
         eve[0, i]['time_mu'] = time_mu
     eve_df = pd.DataFrame.from_dict(eve[0])  # transform to pandas dataframe
     return eve_df
