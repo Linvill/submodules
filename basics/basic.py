@@ -6,6 +6,7 @@ import scipy.io as sio
 from obspy.core import UTCDateTime, Stream
 import pandas as pd
 import pyasdf
+from pathlib import Path
 
 
 def nextpow2(N):
@@ -72,13 +73,22 @@ def load_Grimsel_catalog(path_to_catalog):
 def load_stream_Grimsel(start_time, end_time, asdf_ini, stanos=None):
     stream_1 = Stream()
     if stanos:
-        for stano in stanos:
+        if stanos.size == 1:
+            stano = stanos
             stream_1 += asdf_ini.get_waveforms(network='GRM',
                                                station=str(stano).zfill(3),
                                                location="001", channel="001",
                                                starttime=start_time,
                                                endtime=end_time,
                                                tag="raw_recording")
+        else:
+            for stano in stanos:
+                stream_1 += asdf_ini.get_waveforms(network='GRM',
+                                                   station=str(stano).zfill(3),
+                                                   location="001", channel="001",
+                                                   starttime=start_time,
+                                                   endtime=end_time,
+                                                   tag="raw_recording")
     else:
         for station_nr in enumerate(asdf_ini.waveforms.list()):
             stream_1 += asdf_ini.get_waveforms(network=station_nr[1][:station_nr[1].rfind('.')],
@@ -107,3 +117,9 @@ def maybeidx(vector, v):
         return vector.index(v)
     except ValueError:
         return False
+
+
+def load_cords_Grimsel():
+    path = Path(__file__).parent / "../data/cords_hyd_stimualtion_v02.mat"
+    cords = sio.loadmat(path)
+    return cords
